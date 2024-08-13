@@ -93,6 +93,8 @@ with st.sidebar:
         st.info("You can ask the Pharmacist about medication dosages, side effects, and interactions.")
     if st.button("🏋️ Get Fitness Tips from Sport Scientist"):
         st.info("You can ask the Sport Scientist for exercise routines, fitness plans, and injury prevention tips.")
+    if st.button("🧠 Consult the Therapist"):
+        st.info("You can ask the Therapist about managing stress, improving mental health, or coping with emotional challenges.")
 
 # Create a chat input field to allow the user to enter a message
 if all(st.session_state.user_info.values()):  # Only show chat input if user info is complete
