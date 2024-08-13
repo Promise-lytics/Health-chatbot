@@ -24,16 +24,8 @@ def query(payload):
         st.write("Response content:", response.text)  # Print the raw response for debugging
         return {}
 
-# Show a prominent welcome message with the Equitech logo when the app is loaded
-# Adjust this path to your logo file
-
+# Show a prominent welcome message when the app is loaded
 st.title("Welcome to Equitech Innovation Lab")
-
-if os.path.exists(equitech_logo_path):
-    st.image(equitech_logo_path, width=200)
-else:
-    st.error("Equitech logo not found. Please check the file path.")
-
 st.write("Explore our Multi-Agent Health Chatbot below.")
 
 # Initial user input: name, age, country
