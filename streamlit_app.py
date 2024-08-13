@@ -4,8 +4,6 @@ from PIL import Image
 import json
 import os
 
-ICON_URL = "https://github.com/Promise-lytics/Health-chatbot/blob/main/equitech.png"
-
 API_URL = "https://innovation-institute-flowise.onrender.com/api/v1/prediction/8284332b-ce69-4909-993f-4b1c05a1f04c"
 headers = {"Authorization": "Bearer iy-0IVxxXuZVD9s3vdxc0V7duv6RUeraw2MpsnetfLU"}
 
@@ -45,16 +43,8 @@ def store_message(role, content, icon):
     with st.chat_message(role, avatar=icon):
         st.markdown(content)
 
-# Show a prominent welcome message with an icon when the app is loaded
-st.markdown(
-    f"""
-    <div style="display: flex; align-items: center;">
-        <img src="{ICON_URL}" alt="Equitech Icon" style="width: 50px; margin-right: 10px;">
-        <h1>Welcome to Equitech Innovation Lab</h1>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# Show a prominent welcome message when the app is loaded
+st.title("Welcome to Equitech Innovation Lab")
 
 # Add subtitles for better structure
 st.subheader("🏥 Multi-Agent Health Chatbot")
