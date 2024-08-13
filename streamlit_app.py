@@ -25,7 +25,7 @@ def query(payload):
         return {}
 
 # Show a prominent welcome message with the Equitech logo when the app is loaded
-equitech_logo_path = "/Users/user/Desktop/equitech.png"  # Adjust this path to your logo file
+# Adjust this path to your logo file
 
 st.title("Welcome to Equitech Innovation Lab")
 
