@@ -1,6 +1,6 @@
 import requests
 import streamlit as st
-import re
+from PIL import Image
 import json
 import os
 
@@ -24,25 +24,10 @@ def query(payload):
         st.write("Response content:", response.text)  # Print the raw response for debugging
         return {}
 
-# Show a prominent welcome message when the app is loaded
-st.title("Welcome to Equitech Innovation Lab")
-st.write("Explore our Multi-Agent Health Chatbot below.")
-
-# Initial user input: name, age, country
+# Initialize session state
 if "user_info" not in st.session_state:
-    st.session_state.user_info = {}
+    st.session_state.user_info = {"name": "", "age": None, "country": ""}
 
-if not st.session_state.user_info:
-    st.session_state.user_info["name"] = st.text_input("What's your name?", help="Tell me your name so I can personalize your experience.")
-    st.session_state.user_info["age"] = st.number_input("How old are you?", min_value=1, max_value=120, help="Your age helps me give better advice.")
-    st.session_state.user_info["country"] = st.text_input("Which country are you from?", help="Knowing your country helps in providing region-specific advice.")
-    if st.button("Submit"):
-        st.write(f"Thank you, {st.session_state.user_info['name']}! Let's get started.")
-else:
-    user_name = st.session_state.user_info["name"]
-    st.write(f"Welcome back, {user_name}! How can I assist you today?")
-
-# Session state to store chat messages, agent responses, and feedback visibility
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -51,6 +36,39 @@ if "agent_outputs" not in st.session_state:
 
 if "show_feedback" not in st.session_state:
     st.session_state.show_feedback = False
+
+# Function to store and display chat messages
+def store_message(role, content, icon):
+    st.session_state.messages.append({"role": role, "content": content, "icon": icon})
+    with st.chat_message(role, avatar=icon):
+        st.markdown(content)
+
+# Show a prominent welcome message when the app is loaded
+st.title("Welcome to Equitech Innovation Lab")
+
+# Add subtitles for better structure
+st.subheader("🏥 Multi-Agent Health Chatbot")
+st.write("This chatbot uses a multi-agent system to provide health-related information. "
+    "The system includes specialized agents: Doctor, Therapist, Dietician, Pharmacist, and Sport Scientist."
+
+)
+
+# Collect user details in a single form before moving to the next task
+if not all(st.session_state.user_info.values()):
+    with st.form("user_details_form"):
+        st.session_state.user_info["name"] = st.text_input("What's your name?", help="Tell me your name so I can personalize your experience.")
+        st.session_state.user_info["age"] = st.number_input("How old are you?", min_value=1, max_value=120, help="Your age helps me give better advice.")
+        st.session_state.user_info["country"] = st.text_input("Which country are you from?", help="Knowing your country helps in providing region-specific advice.")
+        
+        submitted = st.form_submit_button("Submit")
+        
+        if submitted and all(st.session_state.user_info.values()):
+            st.success("Thank you! Your details have been recorded.")
+
+# Display welcome back message and user information
+if all(st.session_state.user_info.values()):
+    user_name = st.session_state.user_info["name"]
+    st.write(f"Welcome back, {user_name}! How can I assist you today?")
 
 # Display existing chat messages
 for message in st.session_state.messages:
@@ -77,69 +95,64 @@ with st.sidebar:
         st.info("You can ask the Sport Scientist for exercise routines, fitness plans, and injury prevention tips.")
 
 # Create a chat input field to allow the user to enter a message
-if prompt := st.chat_input("What is up? Ask me anything about health!"):
-    # Store and display the current prompt
-    st.session_state.messages.append({"role": "user", "content": prompt, "icon": "👤"})
-    with st.chat_message("user", avatar="👤"):
-        st.markdown(prompt)
+if all(st.session_state.user_info.values()):  # Only show chat input if user info is complete
+    if prompt := st.chat_input("What is up? Ask me anything about health!"):
+        # Store and display the current prompt
+        store_message("user", prompt, "👤")
 
-    # Personalized response handling
-    if prompt.lower() == "hello":
-        st.session_state.messages.append({"role": "assistant", "content": f"Hello {user_name}! How can I help you today?", "icon": "🤖"})
-        with st.chat_message("assistant", avatar="🤖"):
-            st.markdown(f"Hello {user_name}! How can I help you today?")
-    else:
-        # Generate a response using the Flowise API
-        response_data = query({"question": prompt})
+        # Personalized response handling
+        if prompt.lower() == "hello":
+            store_message("assistant", f"Hello {user_name}! How can I help you today?", "🤖")
+        else:
+            # Generate a response using the Flowise API
+            response_data = query({"question": prompt})
 
-        # Map each agent to a specific icon
-        agent_icons = {
-            "Nutritional app": "🍏",
-            "Sport Scientist": "🏋️",
-            "Dietician": "🥗",
-            "Doctor": "🩺",
-            "Therapist": "🧠",
-            "Pharmacist": "💊",
-            "assistant": "🤖",  # Fallback for the assistant's main response
-        }
+            # Map each agent to a specific icon
+            agent_icons = {
+                "Nutritional app": "🍏",
+                "Sport Scientist": "🏋️",
+                "Dietician": "🥗",
+                "Doctor": "🩺",
+                "Therapist": "🧠",
+                "Pharmacist": "💊",
+                "assistant": "🤖",  # Fallback for the assistant's main response
+            }
 
-        # Track which agent types have already responded
-        seen_agents = set()
-        agent_responses = {}
+            # Track which agent types have already responded
+            seen_agents = set()
+            agent_responses = {}
 
-        # Iterate over the agentReasoning field and display each agent's response if available
-        if "agentReasoning" in response_data:
-            agent_outputs = {}
-            for agent in response_data["agentReasoning"]:
-                agent_name = agent.get("agentName", "Unknown Agent")
-                messages = agent.get("messages", [])
-                icon = agent_icons.get(agent_name, "🤖")  # Fallback icon if agent not found
+            # Iterate over the agentReasoning field and display each agent's response if available
+            if "agentReasoning" in response_data:
+                agent_outputs = {}
+                for agent in response_data["agentReasoning"]:
+                    agent_name = agent.get("agentName", "Unknown Agent")
+                    messages = agent.get("messages", [])
+                    icon = agent_icons.get(agent_name, "🤖")  # Fallback icon if agent not found
 
-                # Check if this agent's advice has already been provided
-                if agent_name not in seen_agents and messages:
-                    seen_agents.add(agent_name)  # Mark this agent as having provided a response
+                    # Check if this agent's advice has already been provided
+                    if agent_name not in seen_agents and messages:
+                        seen_agents.add(agent_name)  # Mark this agent as having provided a response
 
-                    # Display the agent's messages with the user's name included
-                    for message in messages:
-                        personalized_message = f"{user_name}, {message}"
-                        st.session_state.messages.append({"role": agent_name, "content": personalized_message, "icon": icon})
-                        agent_responses[agent_name] = personalized_message  # Save for summary output
-                        agent_outputs[agent_name] = personalized_message  # Save agent output for download
+                        # Display the agent's messages with the user's name included
+                        for message in messages:
+                            personalized_message = f"{user_name}, {message}"
+                            store_message(agent_name, personalized_message, icon)
+                            agent_responses[agent_name] = personalized_message  # Save for summary output
+                            agent_outputs[agent_name] = personalized_message  # Save agent output for download
 
-            # Add agent outputs to session state
-            st.session_state.agent_outputs.append({"prompt": prompt, "responses": agent_outputs})
+                # Add agent outputs to session state
+                st.session_state.agent_outputs.append({"prompt": prompt, "responses": agent_outputs})
 
-            # Show feedback section after agent responds
-            st.session_state.show_feedback = True
+                # Show feedback section after agent responds
+                st.session_state.show_feedback = True
 
-        # Generate a combined summary of all agent responses
-        if agent_responses:
-            summary_message = "Here's a summary of your personalized recommendations:\n\n"
-            for agent_name, response in agent_responses.items():
-                summary_message += f"**{agent_name}:** {response}\n\n"
-            st.session_state.messages.append({"role": "assistant", "content": summary_message, "icon": "🤖"})
-            with st.chat_message("assistant", avatar="🤖"):
-                st.markdown(summary_message)
+            # Generate a combined summary of all agent responses
+            if agent_responses:
+                summary_message = "Here's a summary of your personalized recommendations:\n\n"
+                for agent_name, response in agent_responses.items():
+                    summary_message += f"**{agent_name}:** {response}\n\n"
+                store_message("assistant", summary_message, "🤖")
 
 # Feedback section
 if st.session_state.show_feedback:
