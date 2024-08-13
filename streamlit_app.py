@@ -26,7 +26,7 @@ def query(payload):
 
 # Initialize session state
 if "user_info" not in st.session_state:
-    st.session_state.user_info = {"name": "", "age": None, "height (cm)": None, "weight (km)": None, "country": "", "ethnicity": ""}
+    st.session_state.user_info = {"name": "", "age": None, "height (cm)": None, "weight (kg)": None, "country": "", "ethnicity": ""}
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
