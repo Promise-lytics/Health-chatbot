@@ -26,7 +26,7 @@ def query(payload):
 
 # Initialize session state
 if "user_info" not in st.session_state:
-    st.session_state.user_info = {"name": "", "age": None, "country": ""}
+    st.session_state.user_info = {"name": "", "age": None, "height (cm)": None, "weight (km)": None, "country": "", "ethnicity": ""}
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -58,7 +58,10 @@ if not all(st.session_state.user_info.values()):
     with st.form("user_details_form"):
         st.session_state.user_info["name"] = st.text_input("What's your name?", help="Tell me your name so I can personalize your experience.")
         st.session_state.user_info["age"] = st.number_input("How old are you?", min_value=1, max_value=120, help="Your age helps me give better advice.")
-        st.session_state.user_info["country"] = st.text_input("Which country are you from?", help="Knowing your country helps in providing region-specific advice.")
+        st.session_state.user_info["height (cm)"] = st.number_input("How tall are you in centimeters?", min_value=50, max_value=250, help="Your height helps me calculate your Body Mass Index (BMI).")
+        st.session_state.user_info["weight (kg)"] = st.number_input("How much do you weigh in kilograms", min_value=20, max_value=250, help="Your weight helps me calculate your Body Mass Index (BMI).")
+        st.session_state.user_info["country"] = st.text_input("Which country are you living in?", help="Knowing your country helps in providing region-specific advice.")
+        st.session_state.user_info["ethnicity"] = st.text_input("Which ethnicity do you identify with?", help="Knowing your ethnicity helps me consider ethnicity-related health risk factors.")
         
         submitted = st.form_submit_button("Submit")
         
